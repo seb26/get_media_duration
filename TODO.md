@@ -1,4 +1,14 @@
-PLAN
+# TODO
+
+- Update list of media file extensions
+    - idea:
+    https://stackoverflow.com/questions/50069235/what-are-all-of-the-file-extensions-supported-by-ffmpeg
+
+
+
+
+
+# PLAN
 
 Input
 - Take in input file as single
