@@ -1,12 +1,11 @@
 # TODO
 
-- Update list of media file extensions
-    - idea:
-    https://stackoverflow.com/questions/50069235/what-are-all-of-the-file-extensions-supported-by-ffmpeg
+- check that video frame count and file duration correspond
+    - necessary? maybe just flag in error when they do
 
+- compile a binary
 
-
-
+- add to macos finder extensions/quick actions
 
 # PLAN
 
