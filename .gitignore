@@ -2,6 +2,7 @@
 .history
 .venv
 .vscode
+*.egg-info
 *.pyc
 build/
 dist/

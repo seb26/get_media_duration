@@ -2,5 +2,5 @@
 name = "get_media_duration"
 version = "1.0"
 authors = [
-    { name = "Sebastian Reategui" },
+    { name = "Sebastian Reategui", email = "seb.reategui@gmail.com" },
 ]

@@ -1,9 +1,10 @@
 from os import path
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Union
 import argparse
 import json
 import logging
+import importlib.metadata
 import sys
 
 from timecode import Timecode
@@ -47,12 +48,15 @@ class MediaFile(object):
 
     def get(filepath: str):
         try:
-            probe = ffmpeg.probe(filepath)
+            probe = ffmpeg.probe(
+                filepath,
+                hide_banner = None,
+            )
             if probe:
                 return MediaFile(filepath, probe)
         except Exception as e:
-            logger.error(f"{filepath}\n    Skipped. Exception - {e}")
-            logger.debug(e, exc_info=1)
+            logger.error(f"{filepath}\n    Skipped. Exception - {e} - {e.stderr}")
+            logger.debug(e.stderr, exc_info=1)
         return False
         
 def display_frames_to_tc(fps, frames: int) -> str:
@@ -61,30 +65,39 @@ def display_frames_to_tc(fps, frames: int) -> str:
     atm idk why"""
     return Timecode(fps, frames=frames + 1)
     
-def has_media_file_extension(filepath: str) -> bool:
+def has_media_file_extension(filepath: Path) -> bool:
     """If the extension is in list of extensions associated with ffmpeg support"""
     ext = filepath.suffix
     return ( ext.lower()[1:] in MEDIA_FILE_EXTENSIONS )
 
-def get_media_filepaths(input):
+def get_media_filepaths(
+    input: Union[str, list],
+    allow_all: bool = False,
+) -> Generator:
     if isinstance(input, str):
-        if path.isfile(input):
-            filepath = Path(input)
-            if has_media_file_extension(filepath):
+        filepath = Path(input)
+        if filepath.is_file():
+            if has_media_file_extension(filepath) or allow_all:
                 yield filepath
-        elif path.isdir(input):
-            dirpath = Path(input)
-            for item in dirpath.iterdir():
-                filepath = Path.joinpath(dirpath, item)
-                if has_media_file_extension(filepath):
+        elif filepath.is_dir():
+            for item in filepath.iterdir():
+                if has_media_file_extension(filepath) or allow_all:
                     yield filepath
-    elif isinstance(input, Generator):
-        for filepath in input:
-            if has_media_file_extension(filepath):
-                yield filepath
+    elif isinstance(input, list):
+        for input_item in input:
+            filepath = Path(input_item)
+            if filepath.is_file():
+                if has_media_file_extension(filepath) or allow_all:
+                    yield filepath
+            elif filepath.is_dir():
+                for item in filepath.iterdir():
+                    if has_media_file_extension(item) or allow_all:
+                        yield item
 
-def analyse(input_items) -> dict:
-    media_filepaths = get_media_filepaths(input_items)
+def analyse(
+    media_filepaths: Generator,
+    include_probe: bool = False,
+) -> dict:
     result = {
         'count_files_skipped': 0,
         'count_files': 0,
@@ -99,13 +112,16 @@ def analyse(input_items) -> dict:
             if mf.valid is True:
                 filename = filepath.name
                 # Per this file
-                result['files'].append({
+                data = {
                     'filepath': filepath,
                     'fps': mf.fps,
                     'frame_count': mf.frame_count,
                     'duration_timecode': display_frames_to_tc(mf.fps, mf.frame_count),
-                })
-                logger.info(f"{filepath}\n    FPS: {mf.fps} | Frames: {mf.frame_count:,} | Duration: {mf.duration_timecode}")
+                }
+                if include_probe:
+                    data['probe'] = mf._probe
+                result['files'].append(data)
+                logger.info(f"{filepath}\n    Frames: {mf.frame_count:,} | Duration: {mf.duration_timecode} | FPS: {mf.fps} ")
                 # Summaries
                 result['count_files'] += 1
                 result['count_frames'] += mf.frame_count
@@ -131,48 +147,85 @@ def summary_output(
     ):
     total_duration_timecode = None
     total_duration_timecode_fps = None
+    framerates_found_output = None
     if len(count_framerates) > 0:
-        framerates_found_output = ', '.join( str(i) for i in sorted( count_framerates.keys() ) )
-        sum_durations_lines = []
+        framerates_found_output = "(" + ', '.join( str(i) for i in sorted( count_framerates.keys() ) ) + ")"
+        lines_durations_by_fr = []
         for fps, count_frames in count_frames_by_framerate.items():
             line = f"{display_frames_to_tc(fps, count_frames)} @ {fps} FPS"
-            sum_durations_lines.append(line)
-        sum_durations = '\n                      '.join(sum_durations_lines)
-    tally_output = f"""
-    Files counted:    {count_files}
-    Files skipped:    {count_files_skipped}
-    Framerates found: {len(count_framerates)} ({framerates_found_output})
-
-    Total framecount: {count_frames:,}
-    Total duration:   {sum_durations}
-    """
-    return tally_output
+            lines_durations_by_fr.append(line)
+        durations_by_fr = '\n                         '.join(lines_durations_by_fr)
+    summary = "\n"
+    summary +=       f"    Files counted:       {count_files}"
+    if count_files_skipped > 0:
+        summary += f"\n    Files skipped:       {count_files_skipped}"
+    if len(count_framerates) > 0:
+        summary += f"\n    Framerates found:    {len(count_framerates)} {framerates_found_output}"
+    if count_frames > 0:
+        summary += f"\n    Total framecount:    {count_frames:,}"
+    if len(count_frames_by_framerate) > 0:
+        summary += f"\n    Total duration:      {durations_by_fr}"
+    return summary
 
 if __name__ == '__main__':
+    version = importlib.metadata.version('get_media_duration')
+    author = f"get_media_duration - \n Version: {version}"
+    parser = argparse.ArgumentParser(
+        prog = f'get_media_duration',
+        formatter_class = argparse.RawTextHelpFormatter,
+        description=f"Version: {version} | Author: {importlib.metadata.metadata('get_media_duration').json['author']} \nOutputs the frame count, framerate (FPS) and time duration of a given media file or folder or files, and a summary of totals.",
+    )
+    parser.add_argument('--version', help='show version', action='version', version=importlib.metadata.version('get_media_duration'))
+    parser.add_argument('items', help='file or folder path(s) pointing to media files. For folders, will only traverse only 1 level', nargs='+')
+    parser.add_argument('--allow-all', help='assess files of all extensions', action='store_true')
+    parser.add_argument('--count', help='output only the frame count', action='store_true')
+    parser.add_argument('--debug', help='output debug lines', action='store_true')
+    parser.add_argument('--full-probe', help='includes all probe data including streams info (video, audio, etc) from ffprobe when using --json', action='store_true')
+    parser.add_argument('--json', help='output result in JSON', action='store_true')
+    parser.add_argument('--print-extensions', help='print the list of extensions that are recognised as media files', action='store_true')
+    parser.add_argument('--summary', help='output the summary only and exclude the line of details per file', action='store_true')
+    args = parser.parse_args()
     logger = logging.getLogger('framecount')
-    logging.basicConfig(level=logging.INFO, format='%(message)s')
-
+    logging.basicConfig(
+        format = '%(message)s',
+        level = logging.INFO,
+    )
     handler_stdout = logging.StreamHandler(stream=sys.stdout)
     handler_stdout.setLevel(logging.INFO)
     handler_stderr = logging.StreamHandler(stream=sys.stderr)
-    handler_stderr.setLevel(logging.DEBUG)
-    handler_stderr.addFilter(lambda record: record.levelno >= logging.INFO)
-
-    parser = argparse.ArgumentParser(description='Outputs the frame count, FPS and duration of a given media file or folder or files, and a summary of their total duration')
-    parser.add_argument('input_items', help='File or folder path(s) pointing to media files')
-    parser.add_argument('--quiet', help='Output only the summary', action='store_true')
-    parser.add_argument('--count', help='Output only the frame count', action='store_true')
-    parser.add_argument('--json', help='Output JSON result', action='store_true')
-    args = parser.parse_args()
-
-    if args.quiet or args.json or args.count:
-        logger.setLevel(logging.ERROR)
+    handler_stderr.setLevel(logging.INFO)
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+        handler_stderr.addFilter(lambda record: record.levelno >= logging.DEBUG)
+        handler_stderr.setLevel(logging.DEBUG)
+    elif args.summary or args.count or args.json:
+        # Basically silence everything from logger module
+        logger.removeHandler(handler_stdout)
+        logger.removeHandler(handler_stderr)
+        logger.setLevel(logging.CRITICAL)
     else:
-        logger.setLevel(logging.INFO)
-
-    media_filepaths = get_media_filepaths(args.input_items)
-    result = analyse(media_filepaths)
-    
+        handler_stderr.addFilter(lambda record: record.levelno >= logging.INFO)
+    # Optional flags
+    if args.print_extensions:
+        if args.json:
+            print( json.dumps( MEDIA_FILE_EXTENSIONS) )
+        else:
+            print( ', '.join(MEDIA_FILE_EXTENSIONS) )
+        raise SystemExit
+    # Parse items
+    logger.debug(f"Input items: {args.items}")
+    media_filepaths = list( get_media_filepaths(
+        args.items,
+        allow_all = args.allow_all
+    ) )
+    if len(media_filepaths) == 0:
+        logger.info('No media files found.')
+        raise SystemExit
+    result = analyse(
+        media_filepaths,
+        include_probe = args.full_probe,
+    )
+    # Create output
     if args.json:
         if args.count:
             output = json.dumps( {

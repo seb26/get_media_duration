@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['get_media_duration.py'],
+    ['get_media_duration/__init__.py'],
     pathex=['.venv/lib/python3.11/site-packages/'],
     binaries=[],
     datas=[],
