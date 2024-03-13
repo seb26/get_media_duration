@@ -4,3 +4,8 @@ version = "1.0"
 authors = [
     { name = "Sebastian Reategui", email = "seb.reategui@gmail.com" },
 ]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]

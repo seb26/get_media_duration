@@ -7,6 +7,11 @@
 
 - add to macos finder extensions/quick actions
 
+- handle drop frames - look at timecode library
+    - how to determine this from ffprobe output?
+
+- print-extensions - doesnt, argparse says no items specified
+
 # PLAN
 
 Input
