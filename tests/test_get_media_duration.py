@@ -80,32 +80,14 @@ sample_parameters = [
     ]
 ]
 
-def probe_filepaths_attribute_check(attribute, args, kwargs, expected_result):
-    return probe_filepaths(*args, **kwargs).get(attribute, True) == expected_result.get(attribute, False)
-
-@pytest.mark.parametrize('args,kwargs,expected_result', sample_parameters)
-def test_filepaths_attribute_check__count_files_skipped(args, kwargs, expected_result):
-    assert probe_filepaths_attribute_check('count_files_skipped', args, kwargs, expected_result)
-
-@pytest.mark.parametrize('args,kwargs,expected_result', sample_parameters)
-def test_filepaths_attribute_check__count_files(args, kwargs, expected_result):
-    assert probe_filepaths_attribute_check('count_files', args, kwargs, expected_result)
-
-@pytest.mark.parametrize('args,kwargs,expected_result', sample_parameters)
-def test_filepaths_attribute_check__count_frames(args, kwargs, expected_result):
-    assert probe_filepaths_attribute_check('count_frames', args, kwargs, expected_result)
-
-@pytest.mark.parametrize('args,kwargs,expected_result', sample_parameters)
-def test_filepaths_attribute_check__count_framerates(args, kwargs, expected_result):
-    assert probe_filepaths_attribute_check('count_framerates', args, kwargs, expected_result)
-
-@pytest.mark.parametrize('args,kwargs,expected_result', sample_parameters)
-def test_filepaths_attribute_check__count_frames_by_framerate(args, kwargs, expected_result):
-    assert probe_filepaths_attribute_check('count_frames_by_framerate', args, kwargs, expected_result)
-
 @pytest.mark.parametrize('args,kwargs,expected_result', sample_parameters)
 def test_filepaths_attribute_check__files(args, kwargs, expected_result):
     result = probe_filepaths(*args, **kwargs)
+    assert result.get('count_files_skipped', True) == expected_result.get('count_files_skipped', False)
+    assert result.get('count_files', True) == expected_result.get('count_files', False)
+    assert result.get('count_frames', True) == expected_result.get('count_frames', False)
+    assert result.get('count_framerates', True) == expected_result.get('count_framerates', False)
+    assert result.get('count_frames_by_framerate', True) == expected_result.get('count_frames_by_framerate', False)
     assert result['files'][0].get('filepath', True) == expected_result['files'][0].get('filepath', False)
     assert result['files'][0].get('fps', True) == expected_result['files'][0].get('fps', False)
     assert result['files'][0].get('frame_count', True) == expected_result['files'][0].get('frame_count', False)

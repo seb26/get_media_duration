@@ -3,7 +3,7 @@
 - check that video frame count and file duration correspond
     - necessary? maybe just flag in error when they do
 
-- compile a binary
+x compile a binary
 
 - add to macos finder extensions/quick actions
 
@@ -11,6 +11,8 @@
     - how to determine this from ffprobe output?
 
 - print-extensions - doesnt, argparse says no items specified
+
+- Pipfile - make it reflect ffmpeg-python, timecode
 
 # PLAN
 
