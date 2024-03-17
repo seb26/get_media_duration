@@ -179,7 +179,7 @@ def main():
         description=f"Outputs the frame count, framerate (FPS) and time duration of a given media file or folder or files, and a summary of totals.",
     )
     parser.add_argument('--version', help='show version', action='version', version=importlib.metadata.version('get_media_duration'))
-    parser.add_argument('items', help='file or folder path(s) pointing to media files. For folders, will only traverse only 1 level', nargs='+')
+    parser.add_argument('items', help='file or folder path(s) pointing to media files. For folders, will only traverse only 1 level', nargs='*')
     parser.add_argument('--allow-all', help='assess files of all extensions', action='store_true')
     parser.add_argument('--count', help='output only the frame count', action='store_true')
     parser.add_argument('--debug', help='output debug lines', action='store_true')
@@ -188,13 +188,14 @@ def main():
     parser.add_argument('--print-extensions', help='print the list of extensions that are recognised as media files', action='store_true')
     parser.add_argument('--summary', help='output the summary only and exclude the line of details per file', action='store_true')
     args = parser.parse_args()
-    logger = logging.getLogger('framecount')
-    formatter = logging.Formatter(fmt='%(message)s')
     logger.setLevel(logging.INFO)
-    handler_stdout = logging.StreamHandler(stream=sys.stdout, formatter=formatter)
+    logger.formatter = logging.Formatter(fmt='%(message)s')
+    handler_stdout = logging.StreamHandler(stream=sys.stdout)
     handler_stdout.setLevel(logging.INFO)
-    handler_stderr = logging.StreamHandler(stream=sys.stderr, formatter=formatter)
-    handler_stderr.setLevel(logging.INFO)
+    logger.addHandler(handler_stdout)
+    handler_stderr = logging.StreamHandler(stream=sys.stderr)
+    handler_stderr.setLevel(logging.WARNING)
+    logger.addHandler(handler_stderr)
     if args.debug:
         logger.setLevel(logging.DEBUG)
         handler_stderr.addFilter(lambda record: record.levelno >= logging.DEBUG)
@@ -205,7 +206,7 @@ def main():
         logger.removeHandler(handler_stderr)
         logger.setLevel(logging.CRITICAL)
     else:
-        handler_stderr.addFilter(lambda record: record.levelno >= logging.INFO)
+        handler_stderr.addFilter(lambda record: record.levelno >= logging.WARNING)
     # Optional flags
     if args.print_extensions:
         if args.json:

@@ -3,16 +3,14 @@
 - check that video frame count and file duration correspond
     - necessary? maybe just flag in error when they do
 
-x compile a binary
-
 - add to macos finder extensions/quick actions
+    - finder extensions - complicated
+    - quick actions - perhaps need an Automator wrapper? maybe not
+    - some examples: https://github.com/topics/quick-action
 
 - handle drop frames - look at timecode library
     - how to determine this from ffprobe output?
 
-- print-extensions - doesnt, argparse says no items specified
-
-- Pipfile - make it reflect ffmpeg-python, timecode
 
 # PLAN
 

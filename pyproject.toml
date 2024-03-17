@@ -1,6 +1,6 @@
 [project]
 name = "get_media_duration"
-version = "1.0"
+version = "1.1"
 authors = [
     { name = "Sebastian Reategui", email = "seb.reategui@gmail.com" },
 ]
