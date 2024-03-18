@@ -218,7 +218,7 @@ def main():
     # Optional flags
     if args.print_extensions:
         if args.json:
-            print( json.dumps( MEDIA_FILE_EXTENSIONS) )
+            print( json.dumps(MEDIA_FILE_EXTENSIONS) )
         else:
             print( ', '.join(MEDIA_FILE_EXTENSIONS) )
         raise SystemExit
@@ -230,7 +230,18 @@ def main():
         recurse = args.deep,
     ) )
     if len(media_filepaths) == 0:
-        logger.info('No media files found.')
+        logger.info('No media files found. Check the path(s) or use --deep to recurse deeply into folders to find media files.')
+        if args.json:
+            output = json.dumps(
+                {
+                    'status': 'no_media_files_found',
+                    'count_frames': None,
+                    'count_frames_by_framerate': None,
+                    'files': [],
+                },
+                default = str,
+            )
+            print(output)
         raise SystemExit
     result = probe_filepaths(
         media_filepaths,
@@ -240,11 +251,13 @@ def main():
     if args.json:
         if args.count:
             output = json.dumps( {
+                'status': 'ok',
                 'count_frames': result['count_frames'],
                 'count_frames_by_framerate': result['count_frames_by_framerate']
             } )
             print(output)
         else:
+            result.update({'status': 'ok'})
             output = json.dumps(
                 result,
                 sort_keys = True,

@@ -1,5 +1,9 @@
 # TODO
 
+## bugs
+
+## features/compatibility:
+
 - check that video frame count and file duration correspond
     - necessary? maybe just flag in error when they do
 
