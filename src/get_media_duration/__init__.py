@@ -235,8 +235,8 @@ def main():
             output = json.dumps(
                 {
                     'status': 'no_media_files_found',
-                    'count_frames': None,
-                    'count_frames_by_framerate': None,
+                    'count_frames': 0,
+                    'count_frames_by_framerate': {},
                     'files': [],
                 },
                 default = str,
