@@ -1,6 +1,6 @@
 from os import path
 from pathlib import Path
-from typing import Generator, Union
+from typing import Generator, Union, Iterable
 import argparse
 import json
 import logging
@@ -73,30 +73,37 @@ def has_media_file_extension(filepath: Path) -> bool:
     return ( ext.lower()[1:] in MEDIA_FILE_EXTENSIONS )
 
 def get_media_filepaths(
-    input: Union[str, list],
+    input: Union[str, Iterable],
     allow_all: bool = False,
+    recurse: bool = False,
 ) -> Generator:
-    if isinstance(input, str):
-        filepath = Path(input)
+    """
+    Return Path()s of files and folders that are recognised media files, determined by file extension
+
+    :param input: Path()s in a string or Iterable
+    :param allow_all: Skip file extension check and pass all items. Default is False
+    :param recurse: deeply recurse all folders found and return all items beneath this path in the filesystem.
+                    Default is False and will just return files that are immediate children
+    """
+    def _iterate(filepath: Path):
         if filepath.is_file():
             if has_media_file_extension(filepath) or allow_all:
                 yield filepath
         elif filepath.is_dir():
-            for item in filepath.iterdir():
-                itempath = Path(item)
-                if has_media_file_extension(itempath) or allow_all:
-                    yield itempath
-    elif isinstance(input, list):
+            for child in filepath.iterdir():
+                childpath = Path(child)
+                if has_media_file_extension(childpath) or allow_all:
+                    yield childpath
+                if recurse is True:
+                    if childpath.is_dir():
+                        yield from _iterate(childpath)
+    if isinstance(input, str):
+        filepath = Path(input)
+        yield from _iterate(filepath)
+    elif isinstance(input, Iterable):
         for input_item in input:
             filepath = Path(input_item)
-            if filepath.is_file():
-                if has_media_file_extension(filepath) or allow_all:
-                    yield filepath
-            elif filepath.is_dir():
-                for item in filepath.iterdir():
-                    itempath = Path(item)
-                    if has_media_file_extension(itempath) or allow_all:
-                        yield itempath
+            yield from _iterate(filepath)
 
 def probe_filepaths(
     media_filepaths: Generator,
@@ -183,6 +190,7 @@ def main():
     parser.add_argument('--allow-all', help='assess files of all extensions', action='store_true')
     parser.add_argument('--count', help='output only the frame count', action='store_true')
     parser.add_argument('--debug', help='output debug lines', action='store_true')
+    parser.add_argument('--deep', help='recurse into folders deeply with no limit', action='store_true')
     parser.add_argument('--full-probe', help='includes all probe data including streams info (video, audio, etc) from ffprobe when using --json', action='store_true')
     parser.add_argument('--json', help='output result in JSON', action='store_true')
     parser.add_argument('--print-extensions', help='print the list of extensions that are recognised as media files', action='store_true')
@@ -218,7 +226,8 @@ def main():
     logger.debug(f"Input items: {args.items}")
     media_filepaths = list( get_media_filepaths(
         args.items,
-        allow_all = args.allow_all
+        allow_all = args.allow_all,
+        recurse = args.deep,
     ) )
     if len(media_filepaths) == 0:
         logger.info('No media files found.')
