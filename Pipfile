@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 timecode = "*"
 ffmpeg-python = "*"
+importlib-metadata = "*"
+get-media-duration = {file = "."}
 
 [dev-packages]
 

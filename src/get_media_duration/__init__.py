@@ -2,9 +2,9 @@ from os import path
 from pathlib import Path
 from typing import Generator, Union, Iterable
 import argparse
+import importlib_metadata
 import json
 import logging
-import importlib.metadata
 import sys
 
 from timecode import Timecode
@@ -179,13 +179,12 @@ def summary_output(
     return summary
 
 def main():
-    version = importlib.metadata.version('get_media_duration')
-    metadata = importlib.metadata.metadata('get_media_duration')
+    version = importlib_metadata.version('get_media_duration')
     parser = argparse.ArgumentParser(
         prog = f'get_media_duration (v{version})',
         description=f"Outputs the frame count, framerate (FPS) and time duration of a given media file or folder or files, and a summary of totals.",
     )
-    parser.add_argument('--version', help='show version', action='version', version=importlib.metadata.version('get_media_duration'))
+    parser.add_argument('--version', help='show version', action='version', version=version)
     parser.add_argument('items', help='file or folder path(s) pointing to media files. For folders, will only traverse only 1 level', nargs='*')
     parser.add_argument('--allow-all', help='assess files of all extensions', action='store_true')
     parser.add_argument('--count', help='output only the frame count', action='store_true')
