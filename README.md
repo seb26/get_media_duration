@@ -1,8 +1,16 @@
 # get_media_duration
 
-A simple utility to report frame count, frame rate and duration in HH:MM:SS:FF for a given media file or folders.
+A simple CLI utility to report frame count, frame rate and duration in HH:MM:SS:FF for a given media file or folders.
 
-Uses [ffmpeg-python](https://github.com/kkroening/ffmpeg-python) to examine file metadata.
+`get_media_duration` can accept multiple files, and can deeply examine subfolders.
+
+It can output a simple count, or by default, a one-line report of frames, rate and duration for each file. 
+
+It can also output to JSON, and optionally include the remaining metadata from ffprobe for each file in the result.
+
+It uses [ffmpeg-python](https://github.com/kkroening/ffmpeg-python) to examine file metadata.
+
+Download and install a binary to use, or run with Python >3.7.
 
 ## Usage
 
