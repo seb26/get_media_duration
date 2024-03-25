@@ -4,26 +4,6 @@ A simple utility to report frame count, frame rate and duration in HH:MM:SS:FF f
 
 Uses [ffmpeg-python](https://github.com/kkroening/ffmpeg-python) to examine file metadata.
 
-## Install
-
-Compiled
-- Download binary for macOS ARM64 - GitHub > Releases 
-
-Run as python module
-Only a `pyproject.toml` is provided, no setup.py or 
-
-Compile from source
-1. Git clone
-2. Create venv, use pyinstaller to compile
-```bash
-python -m venv .venv
-.venv/bin/activate
-pipenv install
-pip install pyinstaller -U
-pyinstaller get_media_duration.spec --noconfirm
-```
-4. Binary outputs to ```dist/get_media_duration```
-
 ## Usage
 
 ```zsh
@@ -41,6 +21,57 @@ tests/sample_files/file_25p_30sec.mov
     Total framecount:    750
     Total duration:      00:00:30:00 @ 25 FPS
 ```
+
+## Install
+
+#### Compiled
+1. Download binary for macOS ARM64 - GitHub > Releases
+2. For macOS, remove any quarantine attributes and make executable:
+```
+cd /location/you/unzipped/to
+xattr -c get_media_duration
+chmod +x get_media_duration
+./get_media_duration --help
+```
+3. Optional - For most non-tech savvy macOS users - store it locally and add to your path
+```
+makedirs ~/.local/bin
+cp ./get_media_duration ~/.local/bin
+echo $PATH=$PATH:$HOME/.local/bin
+```
+Then run it from anywhere you have a terminal. Helpful if you want to use Finder > Right-Click > Services > New Terminal Tab from Folder to put yourself right where you want to be in Terminal.
+
+```
+get_media_duration --help
+```
+
+<br />
+
+#### Run as python module
+You must have python >3.7 and pip >24. There is only a `pyproject.toml` provided, no setup.py or other.
+
+```
+# upgrade pip if you have not already
+pip install --upgrade pip
+pip install "git+https://github.com/seb26/get_media_duration.git"
+python -m get_media_duration --help
+```
+
+<br />
+
+#### Compile from source
+1. Git clone
+2. Create venv, use pyinstaller to compile
+```bash
+python -m venv .venv
+.venv/bin/activate
+pipenv install
+pip install pyinstaller -U
+pyinstaller get_media_duration.spec --noconfirm
+```
+3. Binary outputs to ```dist/get_media_duration```
+
+Tests are based on pytest - see: `tests/`
 
 ## Documentation
 
