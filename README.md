@@ -43,7 +43,7 @@ chmod +x get_media_duration
 ```
 3. Optional - For most non-tech savvy macOS users - store it locally and add to your path
 ```
-makedirs ~/.local/bin
+mkdir -p ~/.local/bin
 cp ./get_media_duration ~/.local/bin
 echo $PATH=$PATH:$HOME/.local/bin
 ```
